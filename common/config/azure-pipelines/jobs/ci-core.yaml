@@ -57,5 +57,5 @@ jobs:
         NodeVersion: ${{ parameters.nodeVersion }}
 
     # The publish script identifies any new packages not previously published and tags the build
-    ${{ if and(in(variables['Build.Reason'], 'IndividualCI', 'Schedule', 'Manual') }}:
+    - ${{ if and(in(variables['Build.Reason'], 'IndividualCI', 'Schedule', 'Manual') }}:
       - template: ../templates/publish.yaml
