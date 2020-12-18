@@ -24,30 +24,35 @@ function mapStateToProps(state: RootState) {
   if (!frameworkState)
     return undefined;
 
-  return { userInfo: frameworkState.sessionState.userInfo };
+  return { userInfo: frameworkState.sessionState.userInfo, allowWrite: state.sampleAppState.allowWrite };
 }
 
 interface AppBackstageComposerProps {
   /** UserInfo from sign-in */
   userInfo: UserInfo | undefined;
+  allowWrite: boolean;
 }
 
-export function AppBackstageComposerComponent({ userInfo }: AppBackstageComposerProps) {
+const invertAllowWrite = () => {
+  SampleAppIModelApp.setAllowWrite(!SampleAppIModelApp.allowWrite);
+};
+
+export function AppBackstageComposerComponent({ userInfo, allowWrite: allowWrite }: AppBackstageComposerProps) {
   const hiddenCondition3 = new ConditionalBooleanValue(() => SampleAppIModelApp.getTestProperty() === "HIDE", [SampleAppUiActionId.setTestProperty]);
   const enableCondition = new ConditionalBooleanValue(() => SampleAppIModelApp.getTestProperty() === "HIDE", [SampleAppUiActionId.setTestProperty]);
   const notUi2Condition = new ConditionalBooleanValue(() => SampleAppIModelApp.getUiFrameworkProperty() === "1", [SampleAppUiActionId.toggleFrameworkVersion, SampleAppUiActionId.setFrameworkVersion]);
   const imodelIndexHidden = new ConditionalBooleanValue(() => SampleAppIModelApp.isIModelLocal, [SampleAppUiActionId.setIsIModelLocal]);
 
-  const [backstageItems] = React.useState(() => {
-    if (SampleAppIModelApp.allowWrite) {
+  const composeBackstageItems = (allowWrite: boolean) => {
+    if (allowWrite) {
       return [
         BackstageItemUtilities.createStageLauncher(EditFrontstage.stageId, 100, 10, IModelApp.i18n.translate("SampleApp:backstage.editIModel"), IModelApp.i18n.translate("SampleApp:backstage.editStage"), "icon-edit"),
         BackstageItemUtilities.createStageLauncher("IModelOpen", 300, 10, IModelApp.i18n.translate("SampleApp:backstage.imodelopen"), undefined, "icon-folder-opened"),
         BackstageItemUtilities.createStageLauncher("IModelIndex", 300, 20, IModelApp.i18n.translate("SampleApp:backstage.imodelindex"), undefined, "icon-placeholder", { isHidden: imodelIndexHidden }),
         BackstageItemUtilities.createActionItem("SampleApp.settings", 400, 10, () => FrontstageManager.openModalFrontstage(new SettingsModalFrontstage()), IModelApp.i18n.translate("SampleApp:backstage.testFrontstage6"), undefined, IconSpecUtilities.createSvgIconSpec(settingsIconSvg)),
+        BackstageItemUtilities.createActionItem("InvertAllowWrite", 400, 10, invertAllowWrite, "Invert allowWrite (change Backstage mode)", undefined, IconSpecUtilities.createSvgIconSpec(settingsIconSvg)),
       ];
     }
-
     return [
       BackstageItemUtilities.createStageLauncher(ViewsFrontstage.stageId, 100, 10, IModelApp.i18n.translate("SampleApp:backstage.viewIModel"), IModelApp.i18n.translate("SampleApp:backstage.iModelStage"), `svg:${stageIconSvg}`),
       BackstageItemUtilities.createStageLauncher("Test1", 200, 10, IModelApp.i18n.translate("SampleApp:backstage.testFrontstage1"), undefined, "icon-placeholder", { badgeType: BadgeType.TechnicalPreview }),
@@ -59,12 +64,13 @@ export function AppBackstageComposerComponent({ userInfo }: AppBackstageComposer
       BackstageItemUtilities.createStageLauncher("IModelIndex", 300, 20, IModelApp.i18n.translate("SampleApp:backstage.imodelindex"), undefined, "icon-placeholder", { isHidden: imodelIndexHidden }),
       BackstageItemUtilities.createActionItem("SampleApp.open-local-file", 300, 30, async () => LocalFileOpenFrontstage.open(), IModelApp.i18n.translate("SampleApp:backstage:fileSelect"), undefined, "icon-placeholder"),
       BackstageItemUtilities.createActionItem("SampleApp.settings", 400, 10, () => FrontstageManager.openModalFrontstage(new SettingsModalFrontstage()), IModelApp.i18n.translate("SampleApp:backstage.testFrontstage6"), undefined, IconSpecUtilities.createSvgIconSpec(settingsIconSvg)),
+      BackstageItemUtilities.createActionItem("InvertAllowWrite", 400, 10, invertAllowWrite, "Invert allowWrite (change Backstage mode)", undefined, IconSpecUtilities.createSvgIconSpec(settingsIconSvg)),
       BackstageItemUtilities.createActionItem("SampleApp.componentExamples", 400, 20, () => FrontstageManager.openModalFrontstage(new ComponentExamplesModalFrontstage()), IModelApp.i18n.translate("SampleApp:backstage.componentExamples"), undefined, "icon-details", { badgeType: BadgeType.New }),
     ];
-  });
+  };
 
   return (
-    <BackstageComposer items={backstageItems}
+    <BackstageComposer items={composeBackstageItems(allowWrite)}
       header={userInfo && <UserProfileBackstageItem userInfo={userInfo} />}
     />
   );

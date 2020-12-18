@@ -82,6 +82,7 @@ export enum SampleAppUiActionId {
   toggleFrameworkVersion = "sampleapp:toggleframeworkversion",
   setDragInteraction = "sampleapp:setdraginteraction",
   setFrameworkVersion = "sampleapp:setframeworkversion",
+  setAllowWrite = "sampleapp:setallowwrite",
 }
 
 export interface SampleAppState {
@@ -90,6 +91,7 @@ export interface SampleAppState {
   dragInteraction: boolean;
   frameworkVersion: string;
   isIModelLocal: boolean;
+  allowWrite: boolean;
 }
 
 const initialState: SampleAppState = {
@@ -98,6 +100,7 @@ const initialState: SampleAppState = {
   dragInteraction: true,
   frameworkVersion: "1",
   isIModelLocal: false,
+  allowWrite: false,
 };
 
 // An object with a function that creates each OpenIModelAction that can be handled by our reducer.
@@ -109,6 +112,7 @@ export const SampleAppActions = {
   toggleFrameworkVersion: () => createAction(SampleAppUiActionId.toggleFrameworkVersion),
   setDragInteraction: (dragInteraction: boolean) => createAction(SampleAppUiActionId.setDragInteraction, dragInteraction),
   setFrameworkVersion: (frameworkVersion: string) => createAction(SampleAppUiActionId.setFrameworkVersion, frameworkVersion),
+  setAllowWrite: (allowWrite: boolean) => createAction(SampleAppUiActionId.setAllowWrite, allowWrite),
 };
 
 class SampleAppAccuSnap extends AccuSnap {
@@ -154,6 +158,9 @@ function SampleAppReducer(state: SampleAppState = initialState, action: SampleAp
     }
     case SampleAppUiActionId.setFrameworkVersion: {
       return { ...state, frameworkVersion: action.payload };
+    }
+    case SampleAppUiActionId.setAllowWrite: {
+      return { ...state, allowWrite: action.payload };
     }
   }
   return state;
@@ -497,7 +504,11 @@ export class SampleAppIModelApp {
   }
 
   public static get allowWrite() {
-    return (Config.App.has("imjs_TESTAPP_ALLOW_WRITE") && (Config.App.get("imjs_TESTAPP_ALLOW_WRITE") === "1"));
+    return SampleAppIModelApp.store.getState().sampleAppState.allowWrite;
+  }
+
+  public static setAllowWrite(allowWrite: boolean, immediateSync = false) {
+    UiFramework.dispatchActionToStore(SampleAppUiActionId.setAllowWrite, allowWrite, immediateSync);
   }
 
   public static setTestProperty(value: string, immediateSync = false) {
